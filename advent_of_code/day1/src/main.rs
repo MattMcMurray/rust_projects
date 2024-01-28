@@ -3,87 +3,12 @@ use std::fs::File;
 use std::io::{self, BufRead, Lines, Result};
 use std::path::Path;
 
+mod util;
+
+use util::constants::VALID_DIGITS;
+use util::structs::SubstrLocation;
+
 const INPUT_FILE_PATH: &str = "input.txt";
-
-struct Digit {
-    name: &'static str,
-    value: i32,
-}
-
-const VALID_DIGITS: [Digit; 18] = [
-    Digit {
-        name: "1",
-        value: 1,
-    },
-    Digit {
-        name: "2",
-        value: 2,
-    },
-    Digit {
-        name: "3",
-        value: 3,
-    },
-    Digit {
-        name: "4",
-        value: 4,
-    },
-    Digit {
-        name: "5",
-        value: 5,
-    },
-    Digit {
-        name: "6",
-        value: 6,
-    },
-    Digit {
-        name: "7",
-        value: 7,
-    },
-    Digit {
-        name: "8",
-        value: 8,
-    },
-    Digit {
-        name: "9",
-        value: 9,
-    },
-    Digit {
-        name: "one",
-        value: 1,
-    },
-    Digit {
-        name: "two",
-        value: 2,
-    },
-    Digit {
-        name: "three",
-        value: 3,
-    },
-    Digit {
-        name: "four",
-        value: 4,
-    },
-    Digit {
-        name: "five",
-        value: 5,
-    },
-    Digit {
-        name: "six",
-        value: 6,
-    },
-    Digit {
-        name: "seven",
-        value: 7,
-    },
-    Digit {
-        name: "eight",
-        value: 8,
-    },
-    Digit {
-        name: "nine",
-        value: 9,
-    },
-];
 
 fn main() {
     let mut calibration_sum: i32 = 0;
@@ -146,12 +71,6 @@ fn first_digit(s: &String, reverse: bool) -> u32 {
     }
 
     digit
-}
-
-#[derive(Debug)]
-struct SubstrLocation {
-    value: i32,
-    location: usize,
 }
 
 fn build_map(s: &String) -> Vec<SubstrLocation> {
