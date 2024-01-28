@@ -5,14 +5,104 @@ use std::path::Path;
 
 const INPUT_FILE_PATH: &str = "input.txt";
 
+struct Digit {
+    name: &'static str,
+    value: i32,
+}
+
+const VALID_DIGITS: [Digit; 18] = [
+    Digit {
+        name: "1",
+        value: 1,
+    },
+    Digit {
+        name: "2",
+        value: 2,
+    },
+    Digit {
+        name: "3",
+        value: 3,
+    },
+    Digit {
+        name: "4",
+        value: 4,
+    },
+    Digit {
+        name: "5",
+        value: 5,
+    },
+    Digit {
+        name: "6",
+        value: 6,
+    },
+    Digit {
+        name: "7",
+        value: 7,
+    },
+    Digit {
+        name: "8",
+        value: 8,
+    },
+    Digit {
+        name: "9",
+        value: 9,
+    },
+    Digit {
+        name: "one",
+        value: 1,
+    },
+    Digit {
+        name: "two",
+        value: 2,
+    },
+    Digit {
+        name: "three",
+        value: 3,
+    },
+    Digit {
+        name: "four",
+        value: 4,
+    },
+    Digit {
+        name: "five",
+        value: 5,
+    },
+    Digit {
+        name: "six",
+        value: 6,
+    },
+    Digit {
+        name: "seven",
+        value: 7,
+    },
+    Digit {
+        name: "eight",
+        value: 8,
+    },
+    Digit {
+        name: "nine",
+        value: 9,
+    },
+];
+
 fn main() {
+    let mut calibration_sum: i32 = 0;
     let mut sum: i32 = 0;
 
     if let Ok(lines) = read_lines(INPUT_FILE_PATH) {
         for line in lines.flatten() {
-            let first = first_digit(&line, false);
-            let last = first_digit(&line, true);
+            let f = first_digit(&line, false);
+            let l = first_digit(&line, true);
+            let c = format!("{}{}", f, l);
+            calibration_sum += match c.parse::<i32>() {
+                Ok(val) => val,
+                Err(e) => panic!("Trouble parsing int: {}", e),
+            };
+
+            let first = first_digit_or_word(&line);
+            let last = last_digit_or_word(&line);
             let combined = format!("{}{}", first, last);
+
             sum += match combined.parse::<i32>() {
                 Ok(val) => val,
                 Err(e) => panic!("Trouble parsing int: {}", e),
@@ -20,7 +110,8 @@ fn main() {
         }
     }
 
-    println!("Final value: {}", sum);
+    println!("Calibration sum: {}", calibration_sum);
+    println!("Total sum: {}", sum);
 }
 
 fn read_lines<P>(path: P) -> Result<Lines<io::BufReader<File>>>
@@ -55,4 +146,99 @@ fn first_digit(s: &String, reverse: bool) -> u32 {
     }
 
     digit
+}
+
+#[derive(Debug)]
+struct SubstrLocation {
+    value: i32,
+    location: usize,
+}
+
+fn build_map(s: &String) -> Vec<SubstrLocation> {
+    let mut results: Vec<SubstrLocation> = vec![];
+
+    for item in VALID_DIGITS {
+        let indices: Vec<_> = s.match_indices(&item.name).collect();
+
+        for res in indices {
+            let (idx, _) = res;
+            let location = SubstrLocation {
+                value: item.value,
+                location: idx,
+            };
+
+            results.push(location);
+        }
+    }
+
+    results
+}
+
+fn first_digit_or_word(s: &String) -> u32 {
+    let mut results = build_map(s);
+
+    results.sort_by(|a, b| a.location.cmp(&b.location));
+
+    match results.first() {
+        Some(v) => v.value as u32,
+        None => panic!("No digit found in string: {}", s),
+    }
+}
+
+fn last_digit_or_word(s: &String) -> u32 {
+    let mut results = build_map(s);
+
+    results.sort_by(|a, b| b.location.cmp(&a.location));
+
+    match results.first() {
+        Some(v) => v.value as u32,
+        None => panic!("No digit found in string: {}", s),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_first_digit_or_word() {
+        let mut s = String::from("lkjdlfjone2three");
+
+        assert_eq!(first_digit_or_word(&s), 1);
+
+        s = String::from("two");
+        assert_eq!(first_digit_or_word(&s), 2);
+
+        s = String::from("akjsdklfjsdfjdtw1o");
+        assert_eq!(first_digit_or_word(&s), 1);
+    }
+
+    #[test]
+    fn test_last_digit_or_word() {
+        let mut s = String::from("lkjdlfjone2three");
+
+        assert_eq!(last_digit_or_word(&s), 3);
+
+        s = String::from("lkjdlfjone2three1");
+        assert_eq!(last_digit_or_word(&s), 1);
+
+        s = String::from("lkjdlfjone2three1sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 1);
+        s = String::from("lkjdlfjone2three2sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 2);
+        s = String::from("lkjdlfjone2three3sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 3);
+        s = String::from("lkjdlfjone2three4sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 4);
+        s = String::from("lkjdlfjone2three5sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 5);
+        s = String::from("lkjdlfjone2three6sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 6);
+        s = String::from("lkjdlfjone2three7sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 7);
+        s = String::from("lkjdlfjone2three8sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 8);
+        s = String::from("lkjdlfjone2three9sdjfldkf");
+        assert_eq!(last_digit_or_word(&s), 9);
+    }
 }
