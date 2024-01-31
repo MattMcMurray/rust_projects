@@ -4,13 +4,9 @@ use std::path::Path;
 
 const INPUT_FILE_PATH: &str = "input.txt";
 
+mod engine;
 
-#[derive(Debug)]
-struct EngineSchematic {
-    width: i32,
-    height: i32,
-    schematic: Vec<char>,
-}
+use engine::EngineSchematic;
 
 fn main() {
     let mut schematic = EngineSchematic {
@@ -31,8 +27,6 @@ fn main() {
             schematic.schematic.append(&mut chars);
         }
     }
-    
-    println!("{:?}", schematic);
 }
 
 fn read_lines<P>(path: P) -> IOResult<Lines<io::BufReader<File>>>
