@@ -33,6 +33,41 @@ impl EngineSchematic {
 
       return false;
     }
+
+    /**
+     * Gets all digits that are "neighbours" of the digit at (x, y)
+     */
+    pub fn get_contiguous_digits(&self, x: i32, y: i32) -> i32 {
+      let offset = self.width * y;
+      let mut right = 0;
+      let mut left = 0;
+
+      while (offset + x) + left > offset {
+        if self.get_at(x + left, y).is_digit(10) {
+          left -= 1;
+        } else {
+          break;
+        }
+      };
+      
+      while (x + right) < (self.width) {
+        if self.get_at(x + right, y).is_digit(10) {
+          right += 1;
+        } else {
+          break;
+        }
+      };
+
+      let from = (offset + x + left ) as usize;
+      let to = (offset + x + right) as usize;
+
+      let slice = &self.schematic[from..to].iter().collect::<String>();
+
+      match slice.parse::<i32>() {
+        Ok(val) => val,
+        Err(e) => panic!("Could not parse '{}' into i32", e),
+      }
+    }
 }
 
 #[cfg(test)]
@@ -81,5 +116,24 @@ mod tests {
 
       schematic.schematic = vec!['.', '5', '.', '.', '.', '.', '.', '*', '.'];
       assert!(!schematic.is_part_number(1, 0));
+    }
+
+    #[test]
+    fn test_get_contiguous_digits() {
+      let mut e = EngineSchematic {
+        width: 3,
+        height: 3, 
+        schematic: vec!['.', '.', '.', '4', '2', '.', '.', '.', '.']
+      };
+
+      assert_eq!(e.width * e.height, e.schematic.len() as i32);
+
+      assert_eq!(e.get_contiguous_digits(1, 1), 42);
+
+      e.schematic = vec!['.', '.', '6', '4', '2', '.', '.', '.', '.'];
+      assert_eq!(e.get_contiguous_digits(1, 1), 42);
+
+      e.schematic = vec!['.', '.', '.', '.', '.', '.', '1', '2', '3'];
+      assert_eq!(e.get_contiguous_digits(2, 2), 123);
     }
 }
