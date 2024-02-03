@@ -6,18 +6,20 @@ pub struct EngineSchematic {
 }
 
 impl EngineSchematic {
-    ///Givenvscode-terminal:/094bc4ade822814b23ec785064147005/2 an x, y, return the index of the row-ordered array
+    /// Given an x, y, return the index of the row-ordered vec
     pub fn get_offset(&self, x: i32, y: i32) -> usize {
         let offset = self.width * y;
         return (offset + x) as usize;
     }
 
+    /// Return the element that corresponds to the (x, y) coordinate from the row-ordered vec
     pub fn get_at(&self, x: i32, y: i32) -> char {
         let index = self.get_offset(x, y);
 
         return self.schematic[index as usize];
     }
 
+    /// Based on the requirements, checks if the element at (x, y) is a part of a part number
     pub fn is_part_number(&self, x: i32, y: i32) -> bool {
         if !self.get_at(x, y).is_digit(10) {
             return false;
@@ -43,6 +45,7 @@ impl EngineSchematic {
         return false;
     }
 
+    /// Given an (x, y), determine the gear ratio of the gear; if not a gear, None is returned
     pub fn get_gear_ratio(&self, x: i32, y: i32) -> Option<i32> {
         if self.get_at(x, y) != '*' {
             return None;
@@ -234,7 +237,7 @@ mod tests {
 
         assert_eq!(schematic.get_gear_ratio(3, 0), None);
         assert_eq!(schematic.get_gear_ratio(3, 1), Some(16345));
-        assert_eq!(schematic.get_gear_ratio(3, 4), None);
+        assert_eq!(schematic.get_gear_ratio(3, 4), None); // If not adjacent to 2 numbers, the gear has no ratio
         assert_eq!(schematic.get_gear_ratio(5, 8), Some(755 * 598));
     }
 }
