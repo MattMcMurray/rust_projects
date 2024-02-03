@@ -8,8 +8,8 @@ pub struct EngineSchematic {
 impl EngineSchematic {
     ///Givenvscode-terminal:/094bc4ade822814b23ec785064147005/2 an x, y, return the index of the row-ordered array
     pub fn get_offset(&self, x: i32, y: i32) -> usize {
-      let offset = self.width * y;
-      return (offset + x) as usize;
+        let offset = self.width * y;
+        return (offset + x) as usize;
     }
 
     pub fn get_at(&self, x: i32, y: i32) -> char {
@@ -20,7 +20,7 @@ impl EngineSchematic {
 
     pub fn is_part_number(&self, x: i32, y: i32) -> bool {
         if !self.get_at(x, y).is_digit(10) {
-          return false;
+            return false;
         }
 
         const OFFSET: [i32; 3] = [-1, 0, 1];
@@ -43,6 +43,56 @@ impl EngineSchematic {
         return false;
     }
 
+    pub fn get_gear_ratio(&self, x: i32, y: i32) -> Option<i32> {
+        if self.get_at(x, y) != '*' {
+            return None;
+        };
+
+        const OFFSET: [i32; 3] = [-1, 0, 1];
+
+        let mut digit_locations: Vec<(i32, i32)> = vec![];
+
+        for y_offset in OFFSET {
+            for x_offset in OFFSET {
+                let x = x + x_offset;
+                let y = y + y_offset;
+
+                if x < 0 || y < 0 || x >= self.width || y > self.height {
+                    // pass if coords are out-of-bounds
+                    continue;
+                };
+
+                let c = self.get_at(x, y);
+                if c.is_digit(10) {
+                    digit_locations.push((x, y));
+                };
+            }
+        }
+
+        let mut ratios: Vec<i32> = vec![];
+        let mut visited_locations: Vec<usize> = vec![];
+        for (x, y) in digit_locations {
+            let idx = self.get_offset(x, y);
+
+            if visited_locations.contains(&idx) {
+                continue;
+            };
+
+            let (val, start, end) = self.get_contiguous_digits(x, y);
+            for i in start..end {
+                visited_locations.push(i);
+            }
+
+            ratios.push(val);
+        };
+
+        if ratios.len() <= 1 {
+            return None;
+        }
+
+        return ratios.into_iter().reduce(|a, b| a * b);
+    }
+
     /// Gets all digits that are "neighbours" of the digit at (x, y)
     ///
     /// # Arguments
@@ -58,39 +108,39 @@ impl EngineSchematic {
     ///
     /// usize - the end index
     pub fn get_contiguous_digits(&self, x: i32, y: i32) -> (i32, usize, usize) {
-      let distance_from_left = x;
-      let distance_from_right = self.width - x;
+        let distance_from_left = x;
+        let distance_from_right = self.width - x;
 
-      let mut left = 0;
-      let mut right = 1;
+        let mut left = 0;
+        let mut right = 1;
 
-      while left < distance_from_left {
-        if self.get_at(x - left - 1, y).is_digit(10) {
-          left += 1;
-        } else {
-          break;
+        while left < distance_from_left {
+            if self.get_at(x - left - 1, y).is_digit(10) {
+                left += 1;
+            } else {
+                break;
+            }
         }
-      };
 
-      while right < distance_from_right {
-        if self.get_at(x + right, y).is_digit(10) {
-          right += 1;
-        } else {
-          break;
+        while right < distance_from_right {
+            if self.get_at(x + right, y).is_digit(10) {
+                right += 1;
+            } else {
+                break;
+            }
         }
-      }
 
-      let from = self.get_offset(x - left, y);
-      let to = self.get_offset(x + right, y);
+        let from = self.get_offset(x - left, y);
+        let to = self.get_offset(x + right, y);
 
-      let slice = self.schematic[from..to].iter().collect::<String>();
+        let slice = self.schematic[from..to].iter().collect::<String>();
 
-      let val = match slice.parse::<i32>() {
-        Ok(val) => val,
-        Err(_) => panic!("Could not parse {} into i32", slice),
-      };
+        let val = match slice.parse::<i32>() {
+            Ok(val) => val,
+            Err(_) => panic!("Could not parse {} into i32", slice),
+        };
 
-      return (val, from, to);
+        return (val, from, to);
     }
 }
 
@@ -163,5 +213,28 @@ mod tests {
 
         e.schematic = vec!['.', '.', '.', '.', '.', '.', '1', '2', '3'];
         assert_eq!(e.get_contiguous_digits(2, 2), (123, 6, 9));
+    }
+
+    #[test]
+    fn test_get_gear_ratio() {
+        let input = vec![
+            '4', '6', '7', '.', '.', '1', '1', '4', '.', '.', '.', '.', '.', '*', '.', '.', '.',
+            '.', '.', '.', '.', '.', '3', '5', '.', '.', '6', '3', '3', '.', '.', '.', '.', '.',
+            '.', '.', '#', '.', '.', '.', '6', '1', '7', '*', '.', '.', '.', '.', '.', '.', '.',
+            '.', '.', '.', '.', '+', '.', '5', '8', '.', '.', '.', '5', '9', '2', '.', '.', '.',
+            '.', '.', '.', '.', '.', '.', '.', '.', '7', '5', '5', '.', '.', '.', '.', '$', '.',
+            '*', '.', '.', '.', '.', '.', '6', '6', '4', '.', '5', '9', '8', '.', '.',
+        ];
+
+        let schematic = EngineSchematic {
+            height: 10,
+            width: 10,
+            schematic: input,
+        };
+
+        assert_eq!(schematic.get_gear_ratio(3, 0), None);
+        assert_eq!(schematic.get_gear_ratio(3, 1), Some(16345));
+        assert_eq!(schematic.get_gear_ratio(3, 4), None);
+        assert_eq!(schematic.get_gear_ratio(5, 8), Some(755 * 598));
     }
 }

@@ -10,12 +10,14 @@ use engine::EngineSchematic;
 
 fn main() {
     let schematic = file_to_schematic(INPUT_FILE_PATH);
-    let total = process_schematic(&schematic);
+    let total = sum_part_numbers(&schematic);
+    let gear_ratio = sum_gear_ratios(&schematic);
 
-    println!("Total: {}", total);
+    println!("Part number total: {}", total);
+    println!("Gear ratio total: {}", gear_ratio);
 }
 
-fn process_schematic(schematic: &EngineSchematic) -> i32 {
+fn sum_part_numbers(schematic: &EngineSchematic) -> i32 {
     let mut visited_indices: Vec<usize> = vec![];
 
     let mut total = 0;
@@ -33,6 +35,28 @@ fn process_schematic(schematic: &EngineSchematic) -> i32 {
     }
 
     return total;
+}
+
+fn sum_gear_ratios(schematic: &EngineSchematic) -> i32 {
+    let mut gear_coords: Vec<(i32, i32)> = vec![];
+
+    for y in 0..schematic.height {
+        for x in 0..schematic.width {
+            if schematic.get_at(x, y) == '*' {
+                gear_coords.push((x, y));
+            }
+        }
+    };
+
+    let mut ratio = 0;
+    for (x, y) in gear_coords {
+        ratio += match schematic.get_gear_ratio(x, y) {
+            Some(val) => val,
+            None => 0,
+        }
+    };
+
+    return ratio;
 }
 
 fn file_to_schematic(filepath: &str) -> EngineSchematic {
@@ -82,11 +106,18 @@ mod tests {
     }
 
     #[test]
-    fn test_process_schematic() {
+    fn test_sum_part_numbers() {
         let s = file_to_schematic("test.txt");
-        println!("{:?}", s);
-        let total = process_schematic(&s);
+        let total = sum_part_numbers(&s);
 
         assert_eq!(total, 4361);
+    }
+
+    #[test]
+    fn test_sum_gear_ratios() {
+        let s = file_to_schematic("test.txt");
+        let total = sum_gear_ratios(&s);
+
+        assert_eq!(total, 467835);
     }
 }
